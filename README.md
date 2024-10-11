@@ -1,11 +1,47 @@
 # Analysis of the human reads in gut metagenome shotgun sequencing data
-This is a repository of the codes used in the Tomofuji et al (Reconstruction of the personal information from the contaminated human reads in the gut metagenome shotgun sequencing data).  
-Our script recovers following information from the human reads in the metagenome shotgun sequencing data  
+This is a fork of the repository of the codes used in the Tomofuji et al (Reconstruction of the personal information from the contaminated human reads in the gut metagenome shotgun sequencing data).  
+Aim is to recover following information from the human reads in the metagenome shotgun sequencing data  
 ・Genetic sex of the metagenome shotgun sequencing data  
-・Pair of the metagenome shotgun sequencing data and genotype data derived from the same individual  
-・Genetic ancestry of the metagenome shotgun sequencing data   
+・Find out whether samples are obtained from the same individual
 
-# Overview
+# Prepare for the analysis
+
+## Software
+・singularity, build .sif files:
+
+```
+# bowtie2 and samtools
+singularity build bowtie2_samtools.sif docker://davelabhub/bowtie2_plus_samtools@sha256:04afb9762780dcac25ebd1947c2e12ef81f96a51604dcaed5fb2081804051108
+```
+
+## Files
+Download the human reference genome and index for mapping:
+
+```
+wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz
+singularity exec bowtie2_samtools.sif bowtie2-build human_g1k_v37.fasta.gz human_g1k_v37
+```
+Save a nonpar.bed file (3 columns, tab-seperated) with the non-pseudoautosomal regions of the XY chromosomes (corresponding to GRCh37/hg19):
+X       2699521 154931043
+Y       2649521 59034049
+
+# 1. Extraction of the human reads and prediction of genetic xex
+
+Try out prediction of genetic sex on human reads already extracted with a different method
+
+## Extract reads
+
+To add
+
+## Predict sex
+
+```
+chmod u+x PIPELINE_1b_predict_sex.sh
+./PIPELINE_1b_predict_sex.sh <DIR_IN> <DIR_OUT>
+```
+
+
+# Overview original repo
 <div align="center">
 <img src="Figure/Graphical_abstract.jpg" width=60%>
 </div>
