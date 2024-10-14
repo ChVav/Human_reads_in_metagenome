@@ -36,7 +36,7 @@ for fastq1 in "$DIR_IN"/*_human1.fastq.gz; do
 
     # Run bowtie2 with the extracted ID
     singularity exec bowtie2_samtools.sif bowtie2 -R 3 --no-discordant \
-        -x human_g1k_v37.fasta.gz \
+        -x human_g1k_v37 \
         -1 "$fastq1" \
         -2 "$fastq2" \
         -S "$output_sam"
