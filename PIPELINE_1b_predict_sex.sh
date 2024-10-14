@@ -1,5 +1,4 @@
 #!/bin/bash
-# With human reads already extracted from metagenomes, can I still recover XY chromosome info?
 
 # Check for the correct number of arguments
 if [ "$#" -ne 2 ]; then
@@ -31,11 +30,20 @@ for fastq1 in "$DIR_IN"/*_human1.fastq.gz; do
         continue
     fi
 
-    # Define the output SAM file path
+    # Define the output files and paths
     output_sam="$DIR_OUT/${ID}.sam"
+    output_bam="$DIR_OUT/${ID}.bam"
+    output_bam_index="$DIR_OUT/${ID}.bam.bai"
+    output_bam2="$DIR_OUT/${ID}_rg.bam"
+    output_bam2_index="$DIR_OUT/${ID}_rg.bam.bai"
+    output_bam3="$DIR_OUT/${ID}_rg_nodup.bam"
+    metrics="$DIR_OUT/${ID}_rg_nodup.metrics.txt"
+    out_fastq1="$DIR_OUT/rm_dup_${ID}_mapped_R1.fastq"
+    out_fastq2="$DIR_OUT/rm_dup_${ID}_mapped_R2.fastq"
+    xynonpar_summary="$DIR_OUT/bedcov_${ID}_nonPAR_XY.txt"
 
     # Run bowtie2 with the extracted ID
-    singularity exec bowtie2_samtools.sif bowtie2 -R 3 --no-discordant \
+    singularity exec bowtie2_samtools.sif bowtie2 --threads 16 -R 3 --no-discordant \
         -x human_g1k_v37 \
         -1 "$fastq1" \
         -2 "$fastq2" \
@@ -43,50 +51,52 @@ for fastq1 in "$DIR_IN"/*_human1.fastq.gz; do
 
     echo "Bowtie2 alignment completed for $ID, output saved to $output_sam"
 
-done
-
-    # Extract only properly mapped reads
-    #samtools view -Sb -@ 2 ${ID}.sam | samtools sort -@ 2 -m 20G | \
-    #samtools view -u -f 3 > ${ID}_mapped_pre.bam
-    #rm ${ID}.sam
-    #samtools index ${ID}_mapped_pre.bam
+    # Extract only properly mapped reads to bam and index
+    singularity exec bowtie2_samtools.sif samtools view -Sb -@ 2 "$output_sam" | samtools sort -@ 2 -m 20G | \
+    samtools view -u -f 3 > "$output_bam"
+    rm "$output_sam"
+    singularity exec bowtie2_samtools.sif samtools index "$output_bam"
 
     # Add read groups
-    #java -Xmx16g -jar /path/to/picard/picard.jar \
-    #AddOrReplaceReadGroups I=${ID}_mapped_pre.bam \
-    #O=${ID}_mapped.bam \
-    #RGID=FLOWCELLID \
-    #RGLB=${ID}_test \
-    #RGPU=DUMMY \
-    #RGPL=illumina \
-    #RGSM=${ID} \
-    #VALIDATION_STRINGENCY=LENIENT \
-    #CREATE_INDEX=true
+    singularity exec ./picard.sif java -Xmx16g -jar /usr/local/bin/picard/picard.jar \
+    AddOrReplaceReadGroups I="$output_bam" \
+    O="$output_bam2" \
+    RGID=FLOWCELLID \
+    RGLB=${ID}_test \
+    RGPU=DUMMY \
+    RGPL=illumina \
+    RGSM=${ID} \
+    VALIDATION_STRINGENCY=LENIENT \
+    CREATE_INDEX=true
 
     # Remove duplicates
-    #java -Xmx16g -jar /path/to/picard/picard.jar \
-    #MarkDuplicates I=${ID}_mapped.bam \
-    #O=rm_dup_${ID}_mapped.bam \
-    #M=rm_dup_${ID}_mapped.metrics.txt \
-    #REMOVE_DUPLICATES=true \
-    #ASSUME_SORTED=true \
-    #VALIDATION_STRINGENCY=LENIENT
+    singularity exec ./picard.sif java -Xmx16g -jar /usr/local/bin/picard/picard.jar \
+    MarkDuplicates I="$output_bam2" \
+    O="$output_bam3" \
+    M="$metrics" \
+    REMOVE_DUPLICATES=true \
+    ASSUME_SORTED=true \
+    VALIDATION_STRINGENCY=LENIENT
 
-    # Index the BAM file
-    #samtools index rm_dup_${ID}_mapped.bam
+    # Index the final BAM file
+    singularity exec bowtie2_samtools.sif samtools index "$output_bam3"
 
     # Extract the non-duplicate reads
-    #java -Xmx16g -jar /path/to/picard/picard.jar \
-    #SamToFastq I=rm_dup_${ID}_mapped.bam \
-    #F=rm_dup_${ID}_mapped_R1.fastq F2=rm_dup_${ID}_mapped_R2.fastq
+    singularity exec ./picard.sif java -Xmx16g -jar /usr/local/bin/picard/picard.jar \
+    SamToFastq I="$output_bam3" \
+    F="$out_fastq1" F2="$out_fastq2"
 
-    #gzip -f rm_dup_${ID}_mapped_R1.fastq
-    #gzip -f rm_dup_${ID}_mapped_R2.fastq
+    # Clean up
+    gzip -f "$out_fastq1"
+    gzip -f "$out_fastq2"
+    rm "$output_bam" "$output_bam_index" "$output_bam2" "$output_bam2_index"
 
     # Check XY non-par regions
-    #samtools view -u \
-    #../BAM/rm_dup_${ID}_mapped.bam | \
-    #bedtools coverage -a nonpar.bed \
-    #-b stdin -counts -F 0.1 | \
-    #awk 'BEGIN{OFS="\t"}{print $0"\t"$4/($3-$2)"\t"$4}' | \
-    #sed '1i CHR\tSTART\tEND\tBP\tDepth\tCount' > bedcov_${ID}_nonPAR_XY.txt
+    singularity exec bowtie2_samtools.sif samtools view -u \
+    "$output_bam3" | \
+    singularity exec bedtools.sif bedtools coverage -a nonpar.bed \
+    -b stdin -counts -F 0.1 | \
+    awk 'BEGIN{OFS="\t"}{print $0"\t"$4/($3-$2)"\t"$4}' | \
+    sed '1i CHR\tSTART\tEND\tBP\tDepth\tCount' > "$xynonpar_summary"
+
+done

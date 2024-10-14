@@ -10,8 +10,15 @@ Aim is to recover following information from the human reads in the metagenome s
 ・singularity, build .sif files:
 
 ```
-# bowtie2 and samtools
+# Bowtie 2 v2.3.4.1 and samtools v1.7
 singularity build bowtie2_samtools.sif docker://davelabhub/bowtie2_plus_samtools@sha256:04afb9762780dcac25ebd1947c2e12ef81f96a51604dcaed5fb2081804051108
+
+# Picard v2.21.5
+singularity build ./picard.sif docker://pegi3s/picard@sha256:927475a7ade08cb9376127f04d410a9c78bf7f4fd9a6791363ceed68cd8aac74
+
+# bedtools v2.30.0
+singularity build ./bedtools.sif docker://pegi3s/bedtools@sha256:fc96153f83e4c69d742ee9b2bde33d5d297ef83b0a9b2d81ae32e14e26deb8fc
+
 ```
 
 ## Files
