@@ -56,9 +56,9 @@ for file in "$DIR_IN"/*_1.fastq.gz; do
     --adapter_fasta ./adapters.fa \
     --cut_front 1 \
     --cut_tail 1 \
-    --length_required 60 \  # Minimum length for both reads
-    --thread 16
-    -R "$prefix"
+    --length_required 60 \
+    -w 16 \
+    -R "$ID"
 
     # Define output files for BBMap
     first_final_out="$DIR_OUT/${ID}_clean1.fastq.gz"
@@ -69,24 +69,7 @@ for file in "$DIR_IN"/*_1.fastq.gz; do
     echo "- Removing human reads with BBMap"
 
     # Run BBMap
-    singularity exec ./cleanreads.sif bbmap.sh \
-    t=16 \                   
-    minid=0.95 \    
-    maxindel=3 \              
-    bwr=0.16 \ 
-    bw=12 \   
-    quickmatch \
-    fast \  
-    minhits=2 \ 
-    qtrim=rl \ 
-    trimq=10 \ 
-    untrim \  
-    in1="$first_file_out" \ 
-    in2="$second_file_out" \ 
-    outu1="$first_final_out" \ 
-    outu2="$second_final_out" \
-    outm1="$first_human_out" \
-    outm2="$second_human_out" 
+    singularity exec ./cleanreads.sif bbmap.sh t=16 minid=0.95 maxindel=3 bwr=0.16 bw=12 quickmatch fast minhits=2 qtrim=rl trimq=10 untrim in1="$first_file_out" in2="$second_file_out" outu1="$first_final_out" outu2="$second_final_out" outm1="$first_human_out" outm2="$second_human_out" 
 
 done
 
