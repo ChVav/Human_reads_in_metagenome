@@ -34,6 +34,8 @@ wget https://raw.githubusercontent.com/BioInfoTools/BBMap/master/resources/adapt
 Download the version human reference genome, masked for regions that may be similar to microbial genomes (https://www.seqanswers.com/forum/bioinformatics/bioinformatics-aa/37175-introducing-removehuman-human-contaminant-removal#post245912):
 https://drive.google.com/file/d/0B3llHR93L14wd0pSSnFULUlhcUk/edit?resourcekey=0-PsIKmg2q4EvTGWGOUjsKGQ
 
+This file will be used for initial extraction of the human reads.
+
 Index the file:
 ```
 singularity exec cleanreads.sif bbmap.sh ref=hg19_main_mask_ribo_animal_allplant_allfungus.fa.gz
@@ -53,9 +55,12 @@ Y       2649521 59034049
 
 Try out prediction of genetic sex on human reads already extracted with a different method
 
-## Extract reads
+## Clean reads and extract human reads
 
-To add
+```
+chmod u+x PIPELINE_1a_cleanreads.sh
+./PIPELINE_1a_cleanreads.sh <DIR_IN> <DIR_OUT>
+```
 
 ## Predict sex
 
