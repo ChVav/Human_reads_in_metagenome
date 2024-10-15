@@ -4,12 +4,15 @@ Aim is to recover following information from the human reads in the metagenome s
 ・Genetic sex of the metagenome shotgun sequencing data  
 ・Find out whether samples are obtained from the same individual
 
-# Prepare for the analysis
+# Prepare for running PIPELINE 1a + 1b
 
 ## Software
 ・singularity, build .sif files:
 
 ```
+# One container for cleaning reads, extracting human reads (masked overlap with microbial similar regions)
+singularity build cleanreads.sif docker://chvav/cleanreads@sha256:b8803f1bdb8a91b76286a5d26b38c9b068120869f6bf829c000d3364a6933359
+
 # Bowtie 2 v2.3.4.1 and samtools v1.7
 singularity build bowtie2_samtools.sif docker://davelabhub/bowtie2_plus_samtools@sha256:04afb9762780dcac25ebd1947c2e12ef81f96a51604dcaed5fb2081804051108
 
@@ -22,7 +25,21 @@ singularity build ./bedtools.sif docker://pegi3s/bedtools@sha256:fc96153f83e4c69
 ```
 
 ## Files
-Download the human reference genome and index for mapping:
+
+Download the bbduk provided file with Illumina adaptor and contaminant sequences (PhiX spike in control):
+```
+wget https://raw.githubusercontent.com/BioInfoTools/BBMap/master/resources/adapters.fa
+```
+
+Download the version human reference genome, masked for regions that may be similar to microbial genomes (https://www.seqanswers.com/forum/bioinformatics/bioinformatics-aa/37175-introducing-removehuman-human-contaminant-removal#post245912):
+https://drive.google.com/file/d/0B3llHR93L14wd0pSSnFULUlhcUk/edit?resourcekey=0-PsIKmg2q4EvTGWGOUjsKGQ
+
+Index the file:
+```
+singularity exec cleanreads.sif bbmap.sh ref=hg19_main_mask_ribo_animal_allplant_allfungus.fa.gz
+```
+
+Download the human reference genome and index for final mapping:
 
 ```
 wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz
