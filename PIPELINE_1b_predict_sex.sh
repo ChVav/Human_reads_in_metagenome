@@ -1,4 +1,5 @@
 #!/bin/bash
+# With human reads already extracted from metagenomes, can I still recover XY chromosome info?
 
 # Check for the correct number of arguments
 if [ "$#" -ne 2 ]; then
@@ -35,7 +36,7 @@ for fastq1 in "$DIR_IN"/*_human1.fastq.gz; do
     output_bam="$DIR_OUT/${ID}.bam"
     output_bam_index="$DIR_OUT/${ID}.bam.bai"
     output_bam2="$DIR_OUT/${ID}_rg.bam"
-    output_bam2_index="$DIR_OUT/${ID}_rg.bam.bai"
+    output_bam2_index="$DIR_OUT/${ID}_rg.bai"
     output_bam3="$DIR_OUT/${ID}_rg_nodup.bam"
     metrics="$DIR_OUT/${ID}_rg_nodup.metrics.txt"
     out_fastq1="$DIR_OUT/rm_dup_${ID}_mapped_R1.fastq"
