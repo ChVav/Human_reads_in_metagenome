@@ -22,6 +22,15 @@ singularity build ./picard.sif docker://pegi3s/picard@sha256:927475a7ade08cb9376
 # bedtools v2.30.0
 singularity build ./bedtools.sif docker://pegi3s/bedtools@sha256:fc96153f83e4c69d742ee9b2bde33d5d297ef83b0a9b2d81ae32e14e26deb8fc
 
+# GATK 4.1.4.1
+singularity build ./gatk-4.sif docker://pegi3s/gatk-4@sha256:8415200fe87b4d4eb295e9decb207727e9f75aad73c860a8d0ffe3385a8eaa7a
+
+# plink 1.9
+singularity build ./plink.sif docker://biocontainers/plink1.9@sha256:17e280b12dd9101afa2f9a49e8dcf2b1bd2ac34380c21d8e4e677ffbc5dbbe27
+
+# bcftools 1.21
+sudo singularity build ./bcftools.sif docker://staphb/bcftools@sha256:c256fe5b7f8a216c517c2c6ff8fd68a6643ee614e93eedd181aa2c53600ec209
+
 ```
 
 ## Files
