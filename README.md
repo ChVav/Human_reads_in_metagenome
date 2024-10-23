@@ -4,7 +4,7 @@ Aim is to recover following information from the human reads in the metagenome s
 ・Genetic sex of the metagenome shotgun sequencing data  
 ・Find out whether samples are obtained from the same individual
 
-# Prepare for running PIPELINE 1a + 1b
+# Prepare for running pipelines 1a,1b, 5a
 
 ## Software
 ・singularity, build .sif files:
@@ -56,9 +56,14 @@ Download the human reference genome and index for final mapping:
 wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz
 singularity exec bowtie2_samtools.sif bowtie2-build human_g1k_v37.fasta.gz human_g1k_v37
 ```
-Save a nonpar.bed file (3 columns, tab-seperated) with the non-pseudoautosomal regions of the XY chromosomes (corresponding to GRCh37/hg19):
-X       2699521 154931043
-Y       2649521 59034049
+Save a nonpar.bed file (3 columns, tab-seperated) with the non-pseudoautosomal regions of the XY chromosomes (corresponding to GRCh37/hg19): <br>
+X       2699521 154931043 <br>
+Y       2649521 59034049 <br>
+
+Download the corresponding SNP database from GATK resource bundle:
+```
+wget -c ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz
+```
 
 # 1. Extraction of the human reads and prediction of genetic xex
 
