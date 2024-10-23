@@ -24,9 +24,9 @@ for ID in ${SAMPLES}; do
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx12g" \
   HaplotypeCaller \
-  -R human_g1k_v37 \
+  -R human_g1k_v37_bgzip.fasta.gz \
   -I ${DIR_IN}/${ID}_rg_nodup.bam \
-  --dbsnp dbsnp_138.b37.vcf.gz \
+  --dbsnp dbsnp_138.b37_bgzip.gz \
   -O ${DIR_OUT}/GATK/Unfiltered_GATK_${ID}.vcf
 
   # Filter to retain SNPs and autosomes

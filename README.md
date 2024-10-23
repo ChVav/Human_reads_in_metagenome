@@ -22,7 +22,10 @@ singularity build ./picard.sif docker://pegi3s/picard@sha256:927475a7ade08cb9376
 # bedtools v2.30.0
 singularity build ./bedtools.sif docker://pegi3s/bedtools@sha256:fc96153f83e4c69d742ee9b2bde33d5d297ef83b0a9b2d81ae32e14e26deb8fc
 
-# GATK 4.1.4.1
+# htslib 1.21
+singularity build htslib.sif docker://staphb/htslib@sha256:b6af37ebf92852d4cace4d9e9f1dd434e93245800f046b7788695fcdc8418b8c
+
+# GATK 4.1.4.1 (Picard included here as well)
 singularity build ./gatk-4.sif docker://pegi3s/gatk-4@sha256:8415200fe87b4d4eb295e9decb207727e9f75aad73c860a8d0ffe3385a8eaa7a
 
 # plink 1.9
@@ -53,7 +56,7 @@ singularity exec cleanreads.sif bbmap.sh ref=hg19_main_mask_ribo_animal_allplant
 Download the human reference genome and index for final mapping:
 
 ```
-wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz
+wget -c ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/human_g1k_v37.fasta.gz
 singularity exec bowtie2_samtools.sif bowtie2-build human_g1k_v37.fasta.gz human_g1k_v37
 ```
 Save a nonpar.bed file (3 columns, tab-seperated) with the non-pseudoautosomal regions of the XY chromosomes (corresponding to GRCh37/hg19): <br>
@@ -64,6 +67,25 @@ Download the corresponding SNP database from GATK resource bundle:
 ```
 wget -c ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/b37/dbsnp_138.b37.vcf.gz
 ```
+
+Prepare bgzip file versions of the human genome and corresponding snp database, create indices and sequence dictionary:
+
+```
+# Prep human genome
+gunzip -k human_g1k_v37.fasta.gz
+singularity exec htslib.sif bgzip -c human_g1k_v37.fasta > human_g1k_v37_bgzip.fasta.gz
+singularity exec bowtie2_samtools.sif samtools faidx human_g1k_v37_bgzip.fasta.gz
+
+singularity exec gatk-4.sif gatk CreateSequenceDictionary \
+  -R human_g1k_v37_bgzip.fasta.gz \
+  -O human_g1k_v37_bgzip.dict
+
+# Prep snp db
+gunzip -k dbsnp_138.b37.vcf.gz
+singularity exec htslib.sif bgzip -c dbsnp_138.b37.vcf > dbsnp_138.b37_bgzip.gz
+singularity exec gatk-4.sif gatk IndexFeatureFile -I dbsnp_138.b37_bgzip.gz
+```
+
 
 # 1. Extraction of the human reads and prediction of genetic xex
 
