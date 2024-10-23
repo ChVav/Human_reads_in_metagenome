@@ -27,27 +27,27 @@ for ID in ${SAMPLES}; do
   -R human_g1k_v37_bgzip.fasta.gz \
   -I ${DIR_IN}/${ID}_rg_nodup.bam \
   --dbsnp dbsnp_138.b37_bgzip.gz \
-  -O ${DIR_OUT}/GATK/Unfiltered_GATK_${ID}.vcf
+  -O ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf
 
   # Filter to retain SNPs and autosomes
-  for i in `seq 1 22`; do echo -e ${i}; done > ${DIR_OUT}/GATK/auto.list
+  for i in `seq 1 22`; do echo -e ${i}; done > ${DIR_OUT}/GATK/${ID}/auto.list
 
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx12g" \
   SelectVariants \
   -V Unfiltered_GATK_${ID}.vcf \
   -select-type SNP \
-  -L ${DIR_OUT}/GATK/auto.list \
-  -O ${DIR_OUT}/GATK/Auto_Unfiltered_GATK_${ID}.vcf
+  -L ${DIR_OUT}/GATK/${ID}/auto.list \
+  -O ${DIR_OUT}/GATK/${ID}/Auto_Unfiltered_GATK_${ID}.vcf
 
-  rm ${DIR_OUT}/GATK/auto.list
-  #rm ${DIR_OUT}/GATK/Unfiltered_GATK_${ID}.vcf
+  #rm ${DIR_OUT}/GATK/${ID}/auto.list
+  #rm ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf
 
   # Apply hard filters to SNP dataset
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx8g" \
   VariantFiltration \
-  -V ${DIR_OUT}/GATK/Auto_Unfiltered_GATK_${ID}.vcf \
+  -V ${DIR_OUT}/GATK/${ID}/Auto_Unfiltered_GATK_${ID}.vcf \
   -filter "QD < 2.0" --filter-name "QD2" \
   -filter "DP < 2.0" --filter-name "DP2" \
   -filter "QUAL < 30.0" --filter-name "QUAL30" \
@@ -56,14 +56,14 @@ for ID in ${SAMPLES}; do
   -filter "MQ < 40.0" --filter-name "MQ40" \
   -filter "MQRankSum < -12.5" --filter-name "MQRankSum-12.5" \
   -filter "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSum-8" \
-  -O ${DIR_OUT}/GATK/GATK_${ID}.filtered.vcf
+  -O ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf
 
-  singularity exec ./bcftools.sif bcftools view -i "%FILTER='PASS'" ${DIR_OUT}/GATK/GATK_${ID}.filtered.vcf > ${DIR_OUT}/GATK/GATK_${ID}.vcf
-  #rm ${DIR_OUT}/GATK/GATK_${ID}.filtered.vcf
+  singularity exec ./bcftools.sif bcftools view -i "%FILTER='PASS'" ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf > ${DIR_OUT}/GATK/${ID}/GATK_${ID}.vcf
+  #rm ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf
 
   # Step 2: Convert each filtered VCF to plink format
   singularity exec plink.sif plink1.9 \
-  --vcf ${DIR_OUT}/GATK/GATK_${ID}.vcf \
+  --vcf ${DIR_OUT}/GATK/${ID}/GATK_${ID}.vcf \
   --make-bed \
   --out ${DIR_OUT}/GATK/PLINK_COMPARISON/${ID}_plink
 done
