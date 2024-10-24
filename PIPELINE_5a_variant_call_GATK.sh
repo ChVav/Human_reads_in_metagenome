@@ -16,6 +16,9 @@ mkdir -p ${DIR_OUT}/GATK/PLINK_COMPARISON
 # Extract sample IDs from BAM file names in DIR_IN
 SAMPLES=$(find ${DIR_IN} -name '*_rg_nodup.bam' | sed -r 's!.*/(.*)_rg_nodup\.bam!\1!')
 
+# Create interval list to retain SNPs on autosomes
+for i in `seq 1 22`; do echo "${i}"; done > ${DIR_OUT}/GATK/${ID}/auto.list
+
 # Step 1: Variant calling and filtering for all samples
 for ID in ${SAMPLES}; do
   mkdir -p ${DIR_OUT}/GATK/${ID}
@@ -29,21 +32,18 @@ for ID in ${SAMPLES}; do
   --dbsnp dbsnp_138.b37_bgzip.gz \
   -O ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf
 
-  # Filter to retain SNPs and autosomes
-  for i in `seq 1 22`; do echo -e ${i}; done > ${DIR_OUT}/GATK/${ID}/auto.list
-
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx12g" \
   SelectVariants \
-  -V Unfiltered_GATK_${ID}.vcf \
+  -V ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf \
   -select-type SNP \
-  -L ${DIR_OUT}/GATK/${ID}/auto.list \
+  -L ${DIR_OUT}/GATK/auto.list \
   -O ${DIR_OUT}/GATK/${ID}/Auto_Unfiltered_GATK_${ID}.vcf
 
-  #rm ${DIR_OUT}/GATK/${ID}/auto.list
   #rm ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf
 
   # Apply hard filters to SNP dataset
+  # MQRankSum and ReadPosRankSum not calculated (due to low coverage?)
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx8g" \
   VariantFiltration \
@@ -54,11 +54,11 @@ for ID in ${SAMPLES}; do
   -filter "SOR > 3.0" --filter-name "SOR3" \
   -filter "FS > 60.0" --filter-name "FS60" \
   -filter "MQ < 40.0" --filter-name "MQ40" \
-  -filter "MQRankSum < -12.5" --filter-name "MQRankSum-12.5" \
-  -filter "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSum-8" \
+  #-filter "MQRankSum < -12.5" --filter-name "MQRankSum-12.5" \
+  #-filter "ReadPosRankSum < -8.0" --filter-name "ReadPosRankSum-8" \
   -O ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf
 
-  singularity exec ./bcftools.sif bcftools view -i "%FILTER='PASS'" ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf > ${DIR_OUT}/GATK/${ID}/GATK_${ID}.vcf
+  singularity exec ./bcftools.sif bcftools view -i "FILTER='PASS'" ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf > ${DIR_OUT}/GATK/${ID}/GATK_${ID}.vcf
   #rm ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf
 
   # Step 2: Convert each filtered VCF to plink format
@@ -78,7 +78,7 @@ done
 # If more than one sample, merge them
 if [ $(echo ${SAMPLES} | wc -w) -gt 1 ]; then
   echo ${plink_files} | tr ' ' '\n' > ${DIR_OUT}/GATK/PLINK_COMPARISON/merge_list.txt
-  plink --bfile $(echo ${plink_files} | awk '{print $1}') --merge-list ${DIR_OUT}/GATK/PLINK_COMPARISON/merge_list.txt --make-bed --out ${DIR_OUT}/GATK/PLINK_COMPARISON/merged_samples
+  singularity exec plink.sif plink1.9 --bfile $(echo ${plink_files} | awk '{print $1}') --merge-list ${DIR_OUT}/GATK/PLINK_COMPARISON/merge_list.txt --make-bed --out ${DIR_OUT}/GATK/PLINK_COMPARISON/merged_samples
 else
   cp ${DIR_OUT}/GATK/PLINK_COMPARISON/${ID}_plink.bed ${DIR_OUT}/GATK/PLINK_COMPARISON/merged_samples.bed
   cp ${DIR_OUT}/GATK/PLINK_COMPARISON/${ID}_plink.bim ${DIR_OUT}/GATK/PLINK_COMPARISON/merged_samples.bim
