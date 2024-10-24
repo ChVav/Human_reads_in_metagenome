@@ -1,7 +1,9 @@
 # Analysis of the human reads in gut metagenome shotgun sequencing data
 This is a fork of the repository of the codes used in the Tomofuji et al (Reconstruction of the personal information from the contaminated human reads in the gut metagenome shotgun sequencing data).  
-Code is simplified to recover only following information from the human reads in the metagenome shotgun sequencing data: <br>
-・Genetic sex of the metagenome shotgun sequencing data <br>
+<br>
+
+The original code is simplified to recover only following information from the human reads in the metagenome shotgun sequencing data: <br>
+・Coverage of XY chromosomes (non-par) that can be used to predict genetic sex <br>
 ・Call variants so that SNPs can be used to identify samples from the same person in a dataset (relaxed criteria for low coverage) <br>
 
 # Prepare for running pipelines 1a, 1b, 5a
