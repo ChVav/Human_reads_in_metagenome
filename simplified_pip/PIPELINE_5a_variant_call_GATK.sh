@@ -11,7 +11,7 @@ DIR_IN="$1"
 DIR_OUT="$2"
 
 # Create output directory if it doesn't exist
-mkdir -p ${DIR_OUT}/GATK/PLINK_COMPARISON
+mkdir -p ${DIR_OUT}/GATK/
 
 # Extract sample IDs from BAM file names in DIR_IN
 SAMPLES=$(find ${DIR_IN} -name '*_rg_nodup.bam' | sed -r 's!.*/(.*)_rg_nodup\.bam!\1!')
@@ -22,7 +22,7 @@ for i in `seq 1 22`; do echo "${i}"; done > ${DIR_OUT}/GATK/${ID}/auto.list
 # Step 1: Variant calling and filtering for all samples
 for ID in ${SAMPLES}; do
   mkdir -p ${DIR_OUT}/GATK/${ID}
- 
+
   # Call variants with GATK HaplotypeCaller
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx12g" \
@@ -30,6 +30,7 @@ for ID in ${SAMPLES}; do
   -R human_g1k_v37_bgzip.fasta.gz \
   -I ${DIR_IN}/${ID}_rg_nodup.bam \
   --dbsnp dbsnp_138.b37_bgzip.gz \
+  --native-pair-hmm-threads 16 \
   -O ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf
 
   singularity exec gatk-4.sif gatk \
@@ -42,18 +43,23 @@ for ID in ${SAMPLES}; do
 
   rm ${DIR_OUT}/GATK/${ID}/Unfiltered_GATK_${ID}.vcf
 
-  # Apply hard filters to SNP dataset
-  # MQRankSum and ReadPosRankSum not calculated (due to low coverage?)
+  # Apply soft filters to SNP dataset for low coverage samples
+  # QD  Quality by depth
+  # DP Depth of coverage
+  # QUAL Quality of variant call, low score ~ false positives
+  # SOR Strand Odds ratio, reducing chance of retaining false variants caused by uneven strand representation
+  # FS Fisher strand bias
+  # MQ Mapping quality
   singularity exec gatk-4.sif gatk \
   --java-options "-Xmx8g" \
   VariantFiltration \
   -V ${DIR_OUT}/GATK/${ID}/Auto_Unfiltered_GATK_${ID}.vcf \
-  -filter "QD < 2.0" --filter-name "QD2" \
-  -filter "DP < 2.0" --filter-name "DP2" \
-  -filter "QUAL < 30.0" --filter-name "QUAL30" \
-  -filter "SOR > 3.0" --filter-name "SOR3" \
-  -filter "FS > 60.0" --filter-name "FS60" \
-  -filter "MQ < 40.0" --filter-name "MQ40" \
+  -filter "QD < 1.5" --filter-name "QD1.5" \ 
+  -filter "DP < 1.0" --filter-name "DP1" \ 
+  -filter "QUAL < 20.0" --filter-name "QUAL20" \ 
+  #-filter "SOR > 4.0" --filter-name "SOR4" \ 
+  -filter "FS > 80.0" --filter-name "FS80" \ 
+  -filter "MQ < 30.0" --filter-name "MQ30" \ 
   -O ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf
 
   # Filter additionally for biallelic variants
