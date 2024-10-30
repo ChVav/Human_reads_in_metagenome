@@ -54,12 +54,11 @@ for ID in ${SAMPLES}; do
   --java-options "-Xmx8g" \
   VariantFiltration \
   -V ${DIR_OUT}/GATK/${ID}/Auto_Unfiltered_GATK_${ID}.vcf \
-  -filter "QD < 1.5" --filter-name "QD1.5" \ 
-  -filter "DP < 1.0" --filter-name "DP1" \ 
-  -filter "QUAL < 20.0" --filter-name "QUAL20" \ 
-  #-filter "SOR > 4.0" --filter-name "SOR4" \ 
-  -filter "FS > 80.0" --filter-name "FS80" \ 
-  -filter "MQ < 30.0" --filter-name "MQ30" \ 
+  -filter "QD < 1.5" --filter-name "QD1.5" \
+  -filter "DP < 1.0" --filter-name "DP1" \
+  -filter "QUAL < 20.0" --filter-name "QUAL20" \
+  -filter "FS > 80.0" --filter-name "FS80" \
+  -filter "MQ < 30.0" --filter-name "MQ30" \
   -O ${DIR_OUT}/GATK/${ID}/GATK_${ID}.filtered.vcf
 
   # Filter additionally for biallelic variants
